@@ -300,6 +300,75 @@ for file in COMPILED_FILES:
 
 rippled = env.Program('build/rippled', OBJECT_FILES)
 
+#
+# To build ripplevm, first run:
+#
+# cd src/cpp/native_client
+# scons DESTINATION_ROOT="../../../build/nacl-scons-out" --mode=opt-linux gio platform imc nacl_fault_inject nacl_perf_counter nacl_base nrd_xfer nonnacl_srpc cpu_features thread_interface simple_service manifest_proxy validators ncval_base_x86_32 ncdis_seg_sfi_x86_32 ncval_seg_sfi_x86_32 ncvalidate_x86_32 gio_wrapped_desc nacl_interval nccopy_x86_32 sel
+#
+
+envvm = Environment()
+
+RIPPLEVM_SRCS = glob.glob('src/cpp/ripplevm/*.c')
+
+RIPPLEVM_OBJS = []
+
+for file in RIPPLEVM_SRCS:
+	RIPPLEVM_OBJS.append('build/obj/' + file[8:])
+
+envvm.Append(CFLAGS = ['-Isrc/cpp', '-m32'])
+
+envvm.Append(
+	CPPDEFINES = [
+		['NACL_WINDOWS', '0'],
+		['NACL_OSX', '1' if OSX else '0'],
+		['NACL_LINUX', '1' if not OSX else '0'],
+		['NACL_ANDROID', '0'],
+		# This refers to NaCl's inner sandbox architecture. Ripple contracts are
+		# nacl-x86-32, so we need to compile the x86-32 sandbox, even on 64-bit
+		# systems.
+		['NACL_BUILD_ARCH', 'x86' ],
+		['NACL_BUILD_SUBARCH', '32' ],
+	]
+)
+
+envvm.Append(
+	LINKFLAGS = [
+		'-Lbuild/nacl-scons-out/opt-linux-x86-32/lib',
+		'-m32'
+	]
+)
+
+envvm.Append(
+	LIBS = [
+		'sel',
+		'nacl_base',
+		'nrd_xfer',
+		'platform',
+		'gio',
+		'imc',
+		'simple_service',
+		'nonnacl_srpc',
+		'thread_interface',
+		'nccopy_x86_32',
+		'nacl_perf_counter',
+		'nacl_fault_inject',
+		'gio_wrapped_desc',
+		'validators',
+		'ncvalidate_x86_32',
+		'ncval_seg_sfi_x86_32',
+		'ncdis_seg_sfi_x86_32',
+		'ncval_base_x86_32',
+		'cpu_features',
+		'manifest_proxy',
+		'nacl_interval',
+		'rt'
+	]
+)
+
+ripplevm = envvm.Program('build/ripplevm', RIPPLEVM_OBJS)
+
 tags    = env.CTags('tags', TAG_SRCS)
 
 Default(rippled, tags)
+
