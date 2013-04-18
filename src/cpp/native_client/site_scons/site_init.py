@@ -341,9 +341,9 @@ def SiteInitMain():
   # Since our site dir was specified on the SCons command line, SCons will
   # normally only look at our site dir.  Add back checking for project-local
   # site_scons directories.
-  if not SCons.Script.GetOption('no_site_dir'):
-    SCons.Script.Main._load_site_scons_dir(
-        SCons.Node.FS.get_default_fs().SConstruct_dir, None)
+  #if not SCons.Script.GetOption('no_site_dir'):
+  #  SCons.Script.Main._load_site_scons_dir(
+  #      SCons.Node.FS.get_default_fs().SConstruct_dir, None)
 
 
 # Run main code
