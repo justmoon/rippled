@@ -304,7 +304,7 @@ rippled = env.Program('build/rippled', OBJECT_FILES)
 # To build ripplevm, first run:
 #
 # cd src/cpp/native_client
-# scons DESTINATION_ROOT="../../../build/nacl-scons-out" --mode=opt-linux gio platform imc nacl_fault_inject nacl_perf_counter nacl_base nrd_xfer nonnacl_srpc cpu_features thread_interface simple_service manifest_proxy validators ncval_base_x86_32 ncdis_seg_sfi_x86_32 ncval_seg_sfi_x86_32 ncvalidate_x86_32 gio_wrapped_desc nacl_interval nccopy_x86_32 sel sel_universal
+# scons DESTINATION_ROOT="../../../build/nacl-scons-out" --mode=opt-linux gio platform imc nacl_fault_inject nacl_perf_counter nacl_base nrd_xfer nonnacl_srpc cpu_features thread_interface simple_service manifest_proxy validators ncval_base_x86_32 ncdis_seg_sfi_x86_32 ncval_seg_sfi_x86_32 ncvalidate_x86_32 gio_wrapped_desc nacl_interval nccopy_x86_32 sel sel_universal sel_ldr
 #
 
 envvm = Environment()
