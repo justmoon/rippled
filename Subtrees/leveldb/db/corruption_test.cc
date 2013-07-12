@@ -322,6 +322,7 @@ TEST(CorruptionTest, CompactionInputErrorParanoid) {
 
   Build(10);
   dbi->TEST_CompactMemTable();
+  env_.SleepForMicroseconds(1000000);
   ASSERT_EQ(1, Property("leveldb.num-files-at-level0"));
 
   Corrupt(kTableFile, 100, 1);
@@ -330,7 +331,7 @@ TEST(CorruptionTest, CompactionInputErrorParanoid) {
   // Write must eventually fail because of corrupted table
   Status s;
   std::string tmp1, tmp2;
-  for (int i = 0; i < 10000 && s.ok(); i++) {
+  for (int i = 0; i < 1000000 && s.ok(); i++) {
     s = db_->Put(WriteOptions(), Key(i, &tmp1), Value(i, &tmp2));
   }
   ASSERT_TRUE(!s.ok()) << "write did not fail in corrupted paranoid db";

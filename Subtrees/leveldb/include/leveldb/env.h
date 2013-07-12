@@ -214,9 +214,13 @@ class WritableFile {
   WritableFile() { }
   virtual ~WritableFile();
 
+  // Allows concurrent writers
+  // REQUIRES:  The range of data falling in [offset, offset + data.size()) must
+  // only be written once.
+  virtual Status WriteAt(uint64_t offset, const Slice& data) = 0;
+  // REQUIRES:  external synchronization
   virtual Status Append(const Slice& data) = 0;
   virtual Status Close() = 0;
-  virtual Status Flush() = 0;
   virtual Status Sync() = 0;
 
  private:
