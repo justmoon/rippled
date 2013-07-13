@@ -79,32 +79,40 @@ class DBImpl : public DB {
   // Delete any unneeded files and stale in-memory entries.
   void DeleteObsoleteFiles();
 
-  // Compact the in-memory write buffer to disk.  Switches to a new
-  // log-file/memtable and writes a new descriptor iff successful.
-  Status CompactMemTable()
-      EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  // A background thread to compact the in-memory write buffer to disk.
+  // Switches to a new log-file/memtable and writes a new descriptor iff
+  // successful.
+  static void CompactMemTableWrapper(void* db)
+  { reinterpret_cast<DBImpl*>(db)->CompactMemTableThread(); }
+  void CompactMemTableThread();
 
   Status RecoverLogFile(uint64_t log_number,
                         VersionEdit* edit,
                         SequenceNumber* max_sequence)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  Status WriteLevel0Table(MemTable* mem, VersionEdit* edit, Version* base)
+  Status WriteLevel0Table(MemTable* mem, VersionEdit* edit, Version* base, uint64_t* number)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  Status MakeRoomForWrite(bool force /* compact even if there is room? */)
+  Status SequenceWriteBegin(Writer* w, WriteBatch* updates)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
-  WriteBatch* BuildBatchGroup(Writer** last_writer);
+  void SequenceWriteEnd(Writer* w)
+      EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  void MaybeScheduleCompaction() EXCLUSIVE_LOCKS_REQUIRED(mutex_);
-  static void BGWork(void* db);
-  void BackgroundCall();
+  static void CompactLevelWrapper(void* db)
+  { reinterpret_cast<DBImpl*>(db)->CompactLevelThread(); }
+  void CompactLevelThread();
   Status BackgroundCompaction() EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+
+  static void CompactOptimisticWrapper(void* db)
+  { reinterpret_cast<DBImpl*>(db)->CompactOptimisticThread(); }
+  void CompactOptimisticThread();
+  Status OptimisticCompaction() EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+
   void CleanupCompaction(CompactionState* compact)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
   Status DoCompactionWork(CompactionState* compact)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
-
   Status OpenCompactionOutputFile(CompactionState* compact);
   Status FinishCompactionOutputFile(CompactionState* compact, Iterator* input);
   Status InstallCompactionResults(CompactionState* compact)
@@ -128,7 +136,6 @@ class DBImpl : public DB {
   // State below is protected by mutex_
   port::Mutex mutex_;
   port::AtomicPointer shutting_down_;
-  port::CondVar bg_cv_;          // Signalled when background work finishes
   MemTable* mem_;
   MemTable* imm_;                // Memtable being compacted
   port::AtomicPointer has_imm_;  // So bg thread can detect non-NULL imm_
@@ -136,9 +143,9 @@ class DBImpl : public DB {
   uint64_t logfile_number_;
   log::Writer* log_;
 
-  // Queue of writers.
-  std::deque<Writer*> writers_;
-  WriteBatch* tmp_batch_;
+  // Synchronize writers
+  uint64_t __attribute__ ((aligned (8))) writers_lower_;
+  uint64_t __attribute__ ((aligned (8))) writers_upper_;
 
   SnapshotList snapshots_;
 
@@ -146,8 +153,21 @@ class DBImpl : public DB {
   // part of ongoing compactions.
   std::set<uint64_t> pending_outputs_;
 
-  // Has a background compaction been scheduled or is running?
-  bool bg_compaction_scheduled_;
+  bool allow_background_activity_;
+  bool levels_locked_[leveldb::config::kNumLevels];
+  int num_bg_threads_;
+  // Tell the foreground that background has done something of note
+  port::CondVar bg_fg_cv_;
+  // Communicate with compaction background thread
+  port::CondVar bg_compaction_cv_;
+  // Communicate with memtable->L0 background thread
+  port::CondVar bg_memtable_cv_;
+  // Communicate with the optimistic background thread
+  bool bg_optimistic_trip_;
+  port::CondVar bg_optimistic_cv_;
+  // Mutual exlusion protecting the LogAndApply func
+  port::CondVar bg_log_cv_;
+  bool bg_log_occupied_;
 
   // Information for a manual compaction
   struct ManualCompaction {

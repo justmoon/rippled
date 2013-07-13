@@ -99,6 +99,14 @@ class SpecialEnv : public EnvWrapper {
             base_(base) {
       }
       ~SSTableFile() { delete base_; }
+      Status WriteAt(uint64_t offset, const Slice& data) {
+        if (env_->no_space_.Acquire_Load() != NULL) {
+          // Drop writes on the floor
+          return Status::OK();
+        } else {
+          return base_->WriteAt(offset, data);
+        }
+      }
       Status Append(const Slice& data) {
         if (env_->no_space_.Acquire_Load() != NULL) {
           // Drop writes on the floor
@@ -108,7 +116,6 @@ class SpecialEnv : public EnvWrapper {
         }
       }
       Status Close() { return base_->Close(); }
-      Status Flush() { return base_->Flush(); }
       Status Sync() {
         while (env_->delay_sstable_sync_.Acquire_Load() != NULL) {
           DelayMilliseconds(100);
@@ -123,6 +130,13 @@ class SpecialEnv : public EnvWrapper {
      public:
       ManifestFile(SpecialEnv* env, WritableFile* b) : env_(env), base_(b) { }
       ~ManifestFile() { delete base_; }
+      Status WriteAt(uint64_t offset, const Slice& data) {
+        if (env_->manifest_write_error_.Acquire_Load() != NULL) {
+          return Status::IOError("simulated writer error");
+        } else {
+          return base_->WriteAt(offset, data);
+        }
+      }
       Status Append(const Slice& data) {
         if (env_->manifest_write_error_.Acquire_Load() != NULL) {
           return Status::IOError("simulated writer error");
@@ -131,7 +145,6 @@ class SpecialEnv : public EnvWrapper {
         }
       }
       Status Close() { return base_->Close(); }
-      Status Flush() { return base_->Flush(); }
       Status Sync() {
         if (env_->manifest_sync_error_.Acquire_Load() != NULL) {
           return Status::IOError("simulated sync error");
@@ -601,45 +614,6 @@ TEST(DBTest, GetPicksCorrectFile) {
   } while (ChangeOptions());
 }
 
-TEST(DBTest, GetEncountersEmptyLevel) {
-  do {
-    // Arrange for the following to happen:
-    //   * sstable A in level 0
-    //   * nothing in level 1
-    //   * sstable B in level 2
-    // Then do enough Get() calls to arrange for an automatic compaction
-    // of sstable A.  A bug would cause the compaction to be marked as
-    // occuring at level 1 (instead of the correct level 0).
-
-    // Step 1: First place sstables in levels 0 and 2
-    int compaction_count = 0;
-    while (NumTableFilesAtLevel(0) == 0 ||
-           NumTableFilesAtLevel(2) == 0) {
-      ASSERT_LE(compaction_count, 100) << "could not fill levels 0 and 2";
-      compaction_count++;
-      Put("a", "begin");
-      Put("z", "end");
-      dbfull()->TEST_CompactMemTable();
-    }
-
-    // Step 2: clear level 1 if necessary.
-    dbfull()->TEST_CompactRange(1, NULL, NULL);
-    ASSERT_EQ(NumTableFilesAtLevel(0), 1);
-    ASSERT_EQ(NumTableFilesAtLevel(1), 0);
-    ASSERT_EQ(NumTableFilesAtLevel(2), 1);
-
-    // Step 3: read a bunch of times
-    for (int i = 0; i < 1000; i++) {
-      ASSERT_EQ("NOT_FOUND", Get("missing"));
-    }
-
-    // Step 4: Wait for compaction to finish
-    DelayMilliseconds(1000);
-
-    ASSERT_EQ(NumTableFilesAtLevel(0), 0);
-  } while (ChangeOptions());
-}
-
 TEST(DBTest, IterEmpty) {
   Iterator* iter = db_->NewIterator(ReadOptions());
 
@@ -950,10 +924,10 @@ TEST(DBTest, CompactionsGenerateMultipleFiles) {
 
   Random rnd(301);
 
-  // Write 8MB (80 values, each 100K)
+  // Write 32MB (320 values, each 100K)
   ASSERT_EQ(NumTableFilesAtLevel(0), 0);
   std::vector<std::string> values;
-  for (int i = 0; i < 80; i++) {
+  for (int i = 0; i < 320; i++) {
     values.push_back(RandomString(&rnd, 100000));
     ASSERT_OK(Put(Key(i), values[i]));
   }
@@ -964,7 +938,7 @@ TEST(DBTest, CompactionsGenerateMultipleFiles) {
 
   ASSERT_EQ(NumTableFilesAtLevel(0), 0);
   ASSERT_GT(NumTableFilesAtLevel(1), 1);
-  for (int i = 0; i < 80; i++) {
+  for (int i = 0; i < 320; i++) {
     ASSERT_EQ(Get(Key(i)), values[i]);
   }
 }
@@ -1019,13 +993,9 @@ TEST(DBTest, SparseMerge) {
   Put("C",    "vc2");
   dbfull()->TEST_CompactMemTable();
 
-  // Compactions should not cause us to create a situation where
-  // a file overlaps too much data at the next level.
-  ASSERT_LE(dbfull()->TEST_MaxNextLevelOverlappingBytes(), 20*1048576);
-  dbfull()->TEST_CompactRange(0, NULL, NULL);
-  ASSERT_LE(dbfull()->TEST_MaxNextLevelOverlappingBytes(), 20*1048576);
-  dbfull()->TEST_CompactRange(1, NULL, NULL);
-  ASSERT_LE(dbfull()->TEST_MaxNextLevelOverlappingBytes(), 20*1048576);
+  // this test used to test whether or not compactions would push as high as
+  // possible.
+  // Hint: we don't do that anymore.
 }
 
 static bool Between(uint64_t val, uint64_t low, uint64_t high) {
@@ -2043,6 +2013,8 @@ void BM_LogAndApply(int iters, int num_base_files) {
   Env* env = Env::Default();
 
   port::Mutex mu;
+  port::CondVar cv(&mu);
+  bool wt;
   MutexLock l(&mu);
 
   InternalKeyComparator cmp(BytewiseComparator());
@@ -2056,7 +2028,7 @@ void BM_LogAndApply(int iters, int num_base_files) {
     InternalKey limit(MakeKey(2*fnum+1), 1, kTypeDeletion);
     vbase.AddFile(2, fnum++, 1 /* file size */, start, limit);
   }
-  ASSERT_OK(vset.LogAndApply(&vbase, &mu));
+  ASSERT_OK(vset.LogAndApply(&vbase, &mu, &cv, &wt));
 
   uint64_t start_micros = env->NowMicros();
 
@@ -2066,7 +2038,7 @@ void BM_LogAndApply(int iters, int num_base_files) {
     InternalKey start(MakeKey(2*fnum), 1, kTypeValue);
     InternalKey limit(MakeKey(2*fnum+1), 1, kTypeDeletion);
     vedit.AddFile(2, fnum++, 1 /* file size */, start, limit);
-    vset.LogAndApply(&vedit, &mu);
+    vset.LogAndApply(&vedit, &mu, &cv, &wt);
   }
   uint64_t stop_micros = env->NowMicros();
   unsigned int us = stop_micros - start_micros;
