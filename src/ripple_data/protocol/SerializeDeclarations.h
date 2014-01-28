@@ -94,6 +94,7 @@ FIELD (ReserveBase,          UINT32, 31)
 FIELD (ReserveIncrement,     UINT32, 32)
 FIELD (SetFlag,              UINT32, 33)
 FIELD (ClearFlag,            UINT32, 34)
+FIELD (ApiVersion,           UINT32, 35)
 
 // 64-bit integers
 FIELD (IndexNext,            UINT64, 1)
@@ -156,10 +157,7 @@ FIELD (TxnSignature,         VL, 4)
 FIELD (Generator,            VL, 5)
 FIELD (Signature,            VL, 6)
 FIELD (Domain,               VL, 7)
-FIELD (FundCode,             VL, 8)
-FIELD (RemoveCode,           VL, 9)
-FIELD (ExpireCode,           VL, 10)
-FIELD (CreateCode,           VL, 11)
+FIELD (Code,                 VL, 8)
 
 // account
 FIELD (Account,              ACCOUNT, 1)

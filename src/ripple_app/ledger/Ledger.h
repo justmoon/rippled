@@ -427,6 +427,13 @@ public:
         return getRippleState (getRippleStateIndex (RippleAddress::createAccountID (uiA), RippleAddress::createAccountID (uiB), uCurrency));
     }
 
+    //
+    // Contracts functions
+    //
+
+    // The index of a contract template (code binary entry)
+    static uint256 getTemplateIndex(uint32 uApiVersion, const uint256& uCodeHash);
+
     uint32 getReferenceFeeUnits ()
     {
         if (!mBaseFee) updateFees ();

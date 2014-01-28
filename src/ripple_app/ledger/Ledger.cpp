@@ -1751,6 +1751,17 @@ uint256 Ledger::getRippleStateIndex (const RippleAddress& naA, const RippleAddre
     return s.getSHA512Half ();
 }
 
+uint256 Ledger::getTemplateIndex(uint32 uApiVersion, const uint256& uCodeHash)
+{
+    Serializer	s(38);
+
+    s.add16(spaceTemplate);	//  2
+    s.add32(uApiVersion);		//  4
+    s.add256(uCodeHash);		// 32
+
+    return s.getSHA512Half();
+}
+
 bool Ledger::walkLedger ()
 {
     std::vector <SHAMapMissingNode> missingNodes1;

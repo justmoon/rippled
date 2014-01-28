@@ -44,6 +44,8 @@ enum TxType
 
     ttTRUST_SET         = 20,
 
+    ttTEMPLATE_CREATE   = 30,
+
     ttFEATURE           = 100,
     ttFEE               = 101,
 };

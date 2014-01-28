@@ -45,10 +45,6 @@ LedgerFormats::LedgerFormats ()
             << SOElement (sfOwner,               SOE_REQUIRED)
             << SOElement (sfExpiration,          SOE_REQUIRED)
             << SOElement (sfBondAmount,          SOE_REQUIRED)
-            << SOElement (sfCreateCode,          SOE_OPTIONAL)
-            << SOElement (sfFundCode,            SOE_OPTIONAL)
-            << SOElement (sfRemoveCode,          SOE_OPTIONAL)
-            << SOElement (sfExpireCode,          SOE_OPTIONAL)
             ;
 
     add ("DirectoryNode", ltDIR_NODE)
@@ -115,6 +111,11 @@ LedgerFormats::LedgerFormats ()
             << SOElement (sfReferenceFeeUnits,   SOE_REQUIRED)
             << SOElement (sfReserveBase,         SOE_REQUIRED)
             << SOElement (sfReserveIncrement,    SOE_REQUIRED)
+            ;
+
+    add ("Template", ltTEMPLATE)
+            << SOElement (sfApiVersion,          SOE_REQUIRED)
+            << SOElement (sfCode,                SOE_REQUIRED)
             ;
 }
 

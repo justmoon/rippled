@@ -61,6 +61,8 @@ enum LedgerEntryType
 
     ltCONTRACT          = 'c',
 
+    ltTEMPLATE          = 'p',
+
     ltLEDGER_HASHES     = 'h',
 
     ltFEATURES          = 'f',
@@ -84,6 +86,7 @@ enum LedgerNameSpace
     spaceOwnerDir       = 'O',  // Directory of things owned by an account.
     spaceBookDir        = 'B',  // Directory of order books.
     spaceContract       = 'c',
+    spaceTemplate       = 'p',
     spaceSkipList       = 's',
     spaceFeature        = 'f',
     spaceFee            = 'e',

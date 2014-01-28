@@ -39,6 +39,7 @@ namespace ripple {
 #include "misc/Validations.cpp"
 #include "tx/OfferCreateTransactor.cpp"
 #include "tx/WalletAddTransactor.cpp"
+#include "tx/TemplateCreateTransactor.cpp"
 #include "misc/FeeVote.cpp"
 #   include "misc/PowResult.h"
 #  include "misc/ProofOfWork.h"
