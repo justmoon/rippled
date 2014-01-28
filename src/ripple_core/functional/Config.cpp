@@ -318,6 +318,9 @@ void Config::load ()
             if (SectionSingleB (secConfig, SECTION_PEERS_MAX, strTemp))
                 PEERS_MAX           = lexicalCastThrow <int> (strTemp);
 
+            if (SectionSingleB (secConfig,  SECTION_PNACL_PATH, PNACL_PATH))
+                PNACL_DIR           = PNACL_PATH;
+
             smtTmp = SectionEntries (secConfig, SECTION_RPC_ADMIN_ALLOW);
 
             if (smtTmp)

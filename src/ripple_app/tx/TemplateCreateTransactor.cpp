@@ -34,6 +34,36 @@ TER TemplateCreateTransactor::doApply()
     const uint32        uApiVersion     = mTxn.getFieldU32(sfApiVersion);
     const uint256       uLedgerIndex    = Ledger::getTemplateIndex(uApiVersion, uCodeHash);
 
+	const std::string			strLedgerIndexHex	= uLedgerIndex.GetHex();
+	boost::filesystem::path		pPexe				= theConfig.DATA_DIR / (strLedgerIndexHex + ".pexe");
+	boost::filesystem::path		pNexe				= theConfig.DATA_DIR / (strLedgerIndexHex + ".nexe");
+
+	// Build nexe if not exists
+	// XXX This should be in its own class, we'll need to call it when we find an existing Template in the ledger
+	// XXX This should happen completely in memory
+	if (!boost::filesystem::exists(pNexe)) {
+		std::ofstream			ofsPexe(pPexe.string(), std::fstream::out | std::fstream::trun | std::fstream::binary);
+		if (!ofsPexe.good()) {
+			cLog(lsFATAL) << "Unable to create temporary contract pexe";
+			throw std::runtime_error("Unable to create temporary contract pexe");
+		}
+
+		ofsPexe.write(reinterpret_cast<const char*>(&vucCode[0]), vucCode.size());
+		ofsPexe.close();
+
+		// XXX Hide your kids, hide your wife, this is for proof-of-concept only, not meant as a permanent solution
+		boost::filesystem::path	strPnaclTranslator	= theConfig.PNACL_DIR / "bin/pnacl-translate";
+		const std::string		strCommand			= strPnaclTranslator.string() + " -arch x86-32 " + pPexe.string() + " -o " + pNexe.string() + " --pnacl-sb -nostdlib";
+
+		cLog(lsINFO) << "TemplateCreate: Executing: " << strCommand.c_str();
+		int iResult = system(strCommand.c_str());
+
+		if (iResult) {
+			cLog(lsWARNING) << "TemplateCreate: Translation failed, translator returned status " << iResult;
+			terResult = tecFAILED_PROCESSING;
+		}
+	}
+
     if (tesSUCCESS == terResult)
     {
         WriteLog (lsWARNING, TemplateCreateTransactor) << "TemplateCreate: sfAccount=" << RippleAddress::createHumanAccountID(mTxnAccountID);

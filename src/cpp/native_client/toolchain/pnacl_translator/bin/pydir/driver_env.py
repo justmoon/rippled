@@ -60,7 +60,7 @@ INITIAL_ENV = {
   'STANDARD_ARCH_ARM'   : 'armv7',
   'STANDARD_ARCH_MIPS32': 'mips32',
 
-  'SCONS_OUT'       : '${BASE_NACL}/scons-out',
+  'SCONS_OUT'       : '${BASE_NACL}/../../../build/nacl-scons-out',
 
   # Driver settings
   'ARCH'        : '',     # Target architecture

@@ -66,6 +66,7 @@ struct ConfigSection
 #define SECTION_PEER_SCAN_INTERVAL_MIN  "peer_scan_interval_min"
 #define SECTION_PEER_SSL_CIPHER_LIST    "peer_ssl_cipher_list"
 #define SECTION_PEER_START_MAX          "peer_start_max"
+#define SECTION_PNACL_PATH              "pnacl_path"
 #define SECTION_RPC_ALLOW_REMOTE        "rpc_allow_remote"
 #define SECTION_RPC_ADMIN_ALLOW         "rpc_admin_allow"
 #define SECTION_RPC_ADMIN_USER          "rpc_admin_user"

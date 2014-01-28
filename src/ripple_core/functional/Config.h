@@ -298,6 +298,13 @@ public:
 
     //--------------------------------------------------------------------------
 
+    // Settings related to RPC
+
+    /** Path to the PNaCl translator binaries */
+    boost::filesystem::path     PNACL_DIR;
+
+    //--------------------------------------------------------------------------
+
     /** Parameters for the insight collection module */
     StringPairArray insightSettings;
 
@@ -369,6 +376,9 @@ public:
 
     // Database
     std::string                 DATABASE_PATH;
+
+    // Portable Native Client
+    std::string                 PNACL_PATH;
 
     // Network parameters
     int                         NETWORK_START_TIME;     // The Unix time we start ledger 0.
