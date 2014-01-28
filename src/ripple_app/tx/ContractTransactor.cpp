@@ -17,52 +17,28 @@
 */
 //==============================================================================
 
-#ifndef RIPPLE_TXFORMATS_H_INCLUDED
-#define RIPPLE_TXFORMATS_H_INCLUDED
+SETUP_LOG (ContractTransactor)
 
-/** Transaction type identifiers.
-
-    These are part of the binary message format.
-
-    @ingroup protocol
-*/
-enum TxType
+TER ContractTransactor::doApply()
 {
-    ttINVALID           = -1,
+    WriteLog (lsWARNING, ContractTransactor) << "Contract> " << mTxn.getJson(0);
 
-    ttPAYMENT           = 0,
-    ttCLAIM             = 1, // open
-    ttWALLET_ADD        = 2,
-    ttACCOUNT_SET       = 3,
-    ttPASSWORD_FUND     = 4, // open
-    ttREGULAR_KEY_SET   = 5,
-    ttNICKNAME_SET      = 6, // open
-    ttOFFER_CREATE      = 7,
-    ttOFFER_CANCEL      = 8,
+    const uint256   uTemplateId     = mTxn.getFieldH256(sfTemplateID);
+    TER             terResult       = tesSUCCESS;
 
-    ttTRUST_SET         = 20,
+    // XXX: Fetch compiled binary
 
-    ttTEMPLATE_CREATE   = 30,
-    ttCONTRACT          = 31,
+    // XXX: Execute contract
 
-    ttFEATURE           = 100,
-    ttFEE               = 101,
-};
+    if (tesSUCCESS == terResult)
+    {
+        WriteLog (lsWARNING, ContractTransactor) << "Contract: sfAccount=" << RippleAddress::createHumanAccountID(mTxnAccountID);
 
-/** Manages the list of known transaction formats.
-*/
-class TxFormats : public KnownFormats <TxType>
-{
-private:
-    void addCommonFields (Item& item);
+    }
 
-public:
-    /** Create the object.
-        This will load the object will all the known transaction formats.
-    */
-    TxFormats ();
+    WriteLog (lsINFO, ContractTransactor) << boost::str(boost::format("Contract: final terResult=%s") % transToken(terResult));
 
-    static TxFormats* getInstance ();
-};
+    return terResult;
+}
 
-#endif
+// vim:ts=4

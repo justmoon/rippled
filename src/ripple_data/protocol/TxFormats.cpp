@@ -65,19 +65,9 @@ TxFormats::TxFormats ()
             << SOElement (sfCode,            SOE_REQUIRED)
             ;
 
-    // XXX: Add new contract format
-    /*
     add ("Contract", ttCONTRACT)
-            << SOElement (sfExpiration,      SOE_REQUIRED)
-            << SOElement (sfBondAmount,      SOE_REQUIRED)
-            << SOElement (sfStampEscrow,     SOE_REQUIRED)
-            << SOElement (sfRippleEscrow,    SOE_REQUIRED)
+            << SOElement (sfTemplateID,      SOE_REQUIRED)
             ;
-
-    add ("RemoveContract", ttCONTRACT_REMOVE)
-            << SOElement (sfTarget,          SOE_REQUIRED)
-            ;
-    */
 
     add ("EnableFeature", ttFEATURE)
             << SOElement (sfFeature,         SOE_REQUIRED)

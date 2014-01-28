@@ -126,6 +126,7 @@ FIELD (BookDirectory,        HASH256, 16)
 FIELD (InvoiceID,            HASH256, 17)
 FIELD (Nickname,             HASH256, 18)
 FIELD (Feature,              HASH256, 19)
+FIELD (TemplateID,           HASH256, 20)
 
 // 160-bit (common)
 FIELD (TakerPaysCurrency,    HASH160, 1)
