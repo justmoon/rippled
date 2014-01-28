@@ -149,6 +149,7 @@ namespace ripple {
 #include "tx/TrustSetTransactor.h"
 #include "tx/WalletAddTransactor.h"
 #include "tx/TemplateCreateTransactor.h"
+#include "tx/ContractTransactor.h"
 // VFALCO NOTE These contracts files are bunk
 #include "contracts/ScriptData.h"
 #include "contracts/Contract.h"

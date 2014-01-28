@@ -47,6 +47,9 @@ std::unique_ptr<Transactor> Transactor::makeTransactor (const SerializedTransact
     case ttTEMPLATE_CREATE:
         return std::unique_ptr<Transactor> (new TemplateCreateTransactor (txn, params, engine));
 
+    case ttCONTRACT:
+        return std::unique_ptr<Transactor>(new ContractTransactor(txn, params, engine));
+
     case ttFEATURE:
     case ttFEE:
         return std::unique_ptr<Transactor> (new ChangeTransactor (txn, params, engine));

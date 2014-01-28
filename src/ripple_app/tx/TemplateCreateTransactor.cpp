@@ -52,8 +52,8 @@ TER TemplateCreateTransactor::doApply()
 		ofsPexe.close();
 
 		// XXX Hide your kids, hide your wife, this is for proof-of-concept only, not meant as a permanent solution
-		boost::filesystem::path	strPnaclTranslator	= theConfig.PNACL_DIR / "bin/pnacl-translate";
-		const std::string		strCommand			= strPnaclTranslator.string() + " -arch x86-32 " + pPexe.string() + " -o " + pNexe.string() + " --pnacl-sb -nostdlib";
+    boost::filesystem::path	pPnaclTranslator	= theConfig.PNACL_DIR / "bin/pnacl-translate";
+    const std::string		strCommand			= pPnaclTranslator.string() + " -arch x86-32 " + pPexe.string() + " -o " + pNexe.string() + " --pnacl-sb -nostdlib";
 
 		cLog(lsINFO) << "TemplateCreate: Executing: " << strCommand.c_str();
 		int iResult = system(strCommand.c_str());

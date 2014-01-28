@@ -26,9 +26,13 @@ TER ContractTransactor::doApply()
     const uint256   uTemplateId     = mTxn.getFieldH256(sfTemplateID);
     TER             terResult       = tesSUCCESS;
 
-    // XXX: Fetch compiled binary
+    boost::filesystem::path		pNexe				= theConfig.DATA_DIR / (uTemplateId.GetHex() + ".nexe");
 
-    // XXX: Execute contract
+    if (tesSUCCESS == terResult)
+    {
+        const std::string		strCommand			= "ripplevm " + pNexe.string();
+        system(strCommand.c_str());
+    }
 
     if (tesSUCCESS == terResult)
     {
